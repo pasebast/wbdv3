@@ -1,0 +1,278 @@
+body {
+    font-family: 'Georgia', serif;
+    background-color: #f4f0e6;
+    background-image: url('https://64.media.tumblr.com/c25d3b2f64c96184584b831fba6bb0e2/tumblr_oyfsbzUOey1r9co7bo1_1280.gifv');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow-x: hidden; /* Prevent vertical scrolling on the body */
+}
+
+.admin-container {
+    background-color: rgba(74, 60, 49, 0.9);
+    color: white;
+    margin: 20px;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.admin-container h1 {
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.admin-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.admin-container th, .admin-container td {
+    border: 1px solid #4a3c31;
+    padding: 10px;
+    text-align: left;
+}
+
+.admin-container th {
+    background-color: #4a3c31;
+    color: white;
+}
+
+/* Clickable Order Numbers */
+.admin-container td a {
+    color: #f8f8ff; /* Light color for visibility */
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    padding: 5px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+}
+
+.admin-container td a:hover {
+   background-color: #8B0000; /* Dark red background on hover */
+    color: white; /* White text on hover for contrast */
+    text-decoration: none; /* Keep text decoration as none */
+}
+
+.admin-container .buttons {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.admin-container .button {
+    background-color: #4a3c31;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transitions */
+}
+
+.admin-container .button:hover {
+    background-color: #6b5446;
+    transform: scale(1.05); /* Slightly enlarge the button on hover */
+}
+
+/* Media queries for responsive design */
+@media (max-width: 768px) {
+    .admin-container h1 {
+        font-size: 24px;
+    }
+
+    .admin-container th, .admin-container td {
+        font-size: 14px;
+    }
+
+    .admin-container .button {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-container h1 {
+        font-size: 20px;
+    }
+
+    .admin-container th, .admin-container td {
+        font-size: 12px;
+    }
+
+    .admin-container .button {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+}
+
+
+
+/* Modal Container */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 9999; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #f4f0e6;
+    margin: 10% auto; /* 10% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* The Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Modal Table */
+.modal-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.modal-content th, .modal-content td {
+    border: 1px solid #4a3c31;
+    padding: 10px;
+    text-align: left;
+}
+
+.modal-content th {
+    background-color: #4a3c31;
+    color: white;
+}
+
+.modal-content td {
+    background-color: #f8f8ff; /* Light background for table cells */
+}
+
+.modal-content h3, .modal-content h4 {
+    margin-top: 0;
+    text-align: center;
+}
+
+.modal-content p {
+    text-align: center;
+    font-size: 16px;
+}
+
+/* Media queries for responsive design */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 90%;
+    }
+
+    .modal-content th, .modal-content td {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+    }
+
+    .modal-content th, .modal-content td {
+        font-size: 12px;
+    }
+}
+
+
+.admin-banner {
+    background-color: #8b0000; /* Dark red background */
+    color: #f5f5dc; /* Light text */
+    text-align: center;
+    padding: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    border-bottom: 2px solid #4a3c31; /* Match the theme border */
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.buttons {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.buttons .button {
+    background-color: #4a3c31;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transitions */
+}
+
+.buttons .button:hover {
+    background-color: #6b5446;
+    transform: scale(1.05); /* Slightly enlarge the button on hover */
+}
+
+
+/* Form for updating user status */
+form {
+    display: flex;
+    align-items: center;
+}
+
+form select {
+    margin-right: 10px;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+form .button {
+    background-color: #4a3c31;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+form .button:hover {
+    background-color: #6b5446;
+    transform: scale(1.05);
+}

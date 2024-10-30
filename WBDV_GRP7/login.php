@@ -45,7 +45,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['address'] = $row['address'];
                 $_SESSION['phone_number'] = $row['phone_number'];
                 $_SESSION['gender'] = $row['gender'];
-
+				$_SESSION['email'] = $row['email'];
+				$_SESSION['role'] = $row['role']; // pol role to session
                 // Redirect to homepage after successful login
                 header("Location: homepage.php");
                 exit;

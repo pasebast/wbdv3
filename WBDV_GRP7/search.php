@@ -1,89 +1,68 @@
 <?php
+// Database connection settings
+$host = 'localhost';
+$dbname = 'bookstore_db';
+$username = 'root';  // replace with your actual DB username
+$password = '';      // replace with your actual DB password
 
-$servername = "localhost";
-$dbusername = "root";
-$dbpassword = "";
-$dbname = "bookstore";
-
-// Create connection
-$conn = new mysqli($servername, $dbusername, $dbpassword, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// Connect to the database
+try {
+    $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
 }
 
-// Get the search query from the URL
-$query = isset($_GET['query']) ? $_GET['query'] : '';
+// Check if there's a search query
+if (isset($_GET['query'])) {
+    $search = $_GET['query'];
+    
+    // SQL to fetch books based on the search term
+    $stmt = $conn->prepare("SELECT * FROM books WHERE title LIKE :search");
+    
+    // Execute the query with a bound parameter
+    $stmt->bindParam(':search', $searchTerm, PDO::PARAM_STR);
+    $searchTerm = '%' . $search . '%';
+    $stmt->execute();
+    
+    // Fetch the results
+    $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Prepare the SQL query to search the database
-$sql = "SELECT book_title, price FROM orders WHERE book_title LIKE ?";
-$stmt = $conn->prepare($sql);
-
-// Check if the statement was prepared successfully
-if (!$stmt) {
-    die("Error preparing the statement: " . $conn->error);
+    // Display the results
+    if ($books) {
+        foreach ($books as $book) {
+            echo '<p>' . htmlspecialchars($book['book_title']) . '</p>';
+        }
+    } else {
+        echo '<p>No results found.</p>';
+    }
+    exit;
 }
-
-$searchTerm = "%" . $query . "%";
-$stmt->bind_param("s", $searchTerm);
-
-// Execute the query
-$stmt->execute();
-
-// Bind the result variables
-$stmt->bind_result($book_title, $price);
-
-$output = '';
-if ($stmt->fetch()) {
-    // Fetch and display results
-    do {
-        $output .= '<li><strong>' . htmlspecialchars($book_title) . '</strong> - $' . htmlspecialchars($price) . '</li>';
-    } while ($stmt->fetch());
-} else {
-    $output = '<p>No results found for "' . htmlspecialchars($query) . '"</p>';
-}
-
-echo '<ul>' . $output . '</ul>';
-
-// Close the statement and connection
-$stmt->close();
-$conn->close();
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Books</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Live Search</title>
+    <script>
+        function searchBooks() {
+            const query = document.getElementById('searchInput').value;
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', 'search.php?query=' + query, true);
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    document.getElementById('results').innerHTML = xhr.responseText;
+                }
+            };
+            xhr.send();
+        }
+    </script>
 </head>
 <body>
-    <h1>Search for Books</h1>
-    <input type="text" id="searchQuery" placeholder="Search for books..." autocomplete="off">
-    <div id="searchResults"></div>
-
-    <script>
-        $(document).ready(function() {
-            $('#searchQuery').on('input', function() {
-                var query = $(this).val();
-                if (query.length > 2) { // Start searching after 3 characters
-                    $.ajax({
-                        url: 'search.php',
-                        method: 'GET',
-                        data: { query: query },
-                        success: function(response) {
-                            $('#searchResults').html(response);
-                        }
-                    });
-                } else {
-                    $('#searchResults').html(''); // Clear results if input is less than 3 characters
-                }
-            });
-        });
-    </script>
+    <h1>Search Books</h1>
+    <input type="text" id="searchInput" onkeyup="searchBooks()" placeholder="Search for books...">
+    <div id="results"></div>
 </body>
 </html>
-

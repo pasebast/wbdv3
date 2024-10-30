@@ -244,6 +244,8 @@ $current_page = basename($_SERVER['REQUEST_URI']);
     <?php if ($message): ?>
         <div class="message"><?php echo $message; ?></div>
     <?php endif; ?>
+	
+	
 
     <footer>
         <div class="social-media">

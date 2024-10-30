@@ -1,0 +1,121 @@
+Array
+(
+)
+Array
+(
+    [0] => Array
+        (
+            [id] => 1
+            [title] => The Things You Can See Only When You Slow Down
+            [author] => Haemin Sunim
+            [price] => 659.00
+            [quantity] => 2
+        )
+
+    [1] => Array
+        (
+            [id] => 2
+            [title] => Atomic Habits
+            [author] => James Clear
+            [price] => 1199.00
+            [quantity] => 2
+        )
+
+)
+Array
+(
+)
+Array
+(
+    [0] => Array
+        (
+            [id] => 1
+            [title] => The Things You Can See Only When You Slow Down
+            [author] => Haemin Sunim
+            [price] => 659.00
+            [quantity] => 2
+        )
+
+    [1] => Array
+        (
+            [id] => 2
+            [title] => Atomic Habits
+            [author] => James Clear
+            [price] => 1199.00
+            [quantity] => 1
+        )
+
+)
+Array
+(
+    [book_id] => 2
+    [decrease_quantity] => 
+)
+Array
+(
+    [0] => Array
+        (
+            [id] => 1
+            [title] => The Things You Can See Only When You Slow Down
+            [author] => Haemin Sunim
+            [price] => 659.00
+            [quantity] => 2
+        )
+
+)
+Array
+(
+    [book_id] => 2
+    [decrease_quantity] => 
+)
+Array
+(
+    [0] => Array
+        (
+            [id] => 1
+            [title] => The Things You Can See Only When You Slow Down
+            [author] => Haemin Sunim
+            [price] => 659.00
+            [quantity] => 3
+        )
+
+)
+Array
+(
+    [book_id] => 1
+    [increase_quantity] => 
+)
+Array
+(
+    [0] => Array
+        (
+            [id] => 1
+            [title] => The Things You Can See Only When You Slow Down
+            [author] => Haemin Sunim
+            [price] => 659.00
+            [quantity] => 4
+        )
+
+)
+Array
+(
+    [book_id] => 1
+    [increase_quantity] => 
+)
+Array
+(
+    [0] => Array
+        (
+            [id] => 1
+            [title] => The Things You Can See Only When You Slow Down
+            [author] => Haemin Sunim
+            [price] => 659.00
+            [quantity] => 5
+        )
+
+)
+Array
+(
+    [book_id] => 1
+    [increase_quantity] => 
+)

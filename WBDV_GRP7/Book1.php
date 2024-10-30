@@ -83,29 +83,37 @@ if (isset($_POST['add_to_cart'])) {
     exit();
 }
 
-$query = isset($_GET['query']) ? $_GET['query'] : '';
+if (isset($_POST['query'])) {
+    $search = strtolower($_POST['query']); // Convert query to lowercase for case-insensitive matching
+    $search = mysqli_real_escape_string($conn, $search); // Sanitize input to prevent SQL injection
 
-if ($query) {
-    // Process the search query (you can customize this to match book titles with different PHP logic)
-    echo "<h1>Searching for: " . htmlspecialchars($query) . "</h1>";
-    
-    // Here you could run a database query or redirect to specific content
-    // For example, you could redirect to a specific book page:
-    if ($query == 'The Things You Can See Only When You Slow Down') {
-        header('Location: Book1.php');
-        exit;
+    // SQL query to search for books by title or author
+    $sql = "SELECT book_title, book_author, book_price, book_image FROM books WHERE LOWER(book_title) LIKE '%$search%' OR LOWER(book_author) LIKE '%$search%'";
+
+    // Execute the query
+    $result = mysqli_query($conn, $sql);
+
+    // Check if any results were returned
+    if (mysqli_num_rows($result) > 0) {
+        echo '<div class="search-results">';
+        while ($row = mysqli_fetch_assoc($result)) {
+            echo '<div class="search-result">';
+            echo '<img src="' . $row['book_image'] . '" alt="' . $row['book_title'] . '" class="result-image" style="height: 200px;">'; // Display book image
+            echo '<div class="result-info">';
+            echo '<strong class="result-title">' . $row['book_title'] . '</strong><br>';
+            echo '<em class="result-author">' . $row['book_author'] . '</em><br>';
+            echo '<span class="result-price">Price: ₱' . $row['book_price'] . '</span>';
+            echo '</div>';
+            echo '</div>';
+        }
+        echo '</div>';
+    } else {
+        echo '<p>No results found</p>';
     }
-
-    // Otherwise, you could display search results:
-    // (Use the same logic as in the previous example to fetch books from the database)
-    // e.g., SELECT book_title, price FROM books WHERE book_title LIKE '%$query%'
-}
-else {
-    echo "<h1>No search query provided.</h1>";
 }
 
 ?>
-?>
+
 
 
 <!DOCTYPE html>
@@ -392,6 +400,54 @@ else {
 .logout-button:hover {
     background-color: #6b5446;
 }
+
+
+.search-results-container {
+    max-height: 300px; /* Adjust as needed */
+
+    position: relative;
+    z-index: 9999; /* High enough to appear on top of other elements */
+    background-color: white;
+    border: 1px solid #ddd;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+.search-result {
+    padding: 5px 10px;
+    background-color: #fff;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+    height: 40px; /* Set a fixed height for uniformity */
+    display: flex;
+    align-items: center; /* Center content vertically */
+}
+
+
+.search-result a {
+    color: #333;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.search-result a:hover {
+    color: #007bff;
+}
+.search-result:hover {
+    transform: translateY(-2px); /* Slight lift effect on hover */
+}
+
+.result-title a {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    text-decoration: none;
+}
+
+.result-title a:hover {
+    color: #007bff;
+}
+
     </style>
 </head>
 <body>
@@ -402,12 +458,17 @@ else {
 		</div> 
          <h3>UPLIFT PAGE BOOKSTORE</h3>
         <div class="search-bar-container">
-            <form action="search.php" method="GET" class="search-bar">
-                <input type="text" name="query" placeholder="Search for books...">
-                <button type="submit">
-                    <img src="https://icons.veryicon.com/png/o/miscellaneous/prototyping-tool/search-bar-01.png" alt="Search">
-                </button>
-            </form>
+           <!-- Search Bar -->
+<!-- Search Bar -->
+<form action="fetch_search_results.php" method="GET" class="search-bar" id="searchForm">
+    <input type="text" name="query" id="searchInput" placeholder="Search for books...">
+</form>
+
+<!-- Search Results Container -->
+<div id="searchResults" style="position: absolute; background-color: white; margin-top: 35px; max-height: 300px; overflow-y: auto; z-index: 9999; border: 1px solid #ddd; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);">
+    <!-- Results will appear here -->
+</div>
+
         </div>
 		<div class="main-content">
             <?php if (isset($_SESSION['firstname'])): ?>
@@ -460,7 +521,26 @@ This book is what you reach for when you're feeling low, it's a hug in book form
 
         </div>
     </div>
+<script>
 
+searchInput.addEventListener('input', function () {
+    const formData = new FormData(searchForm);
+
+    fetch('fetch_search_results.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.text())
+    .then(data => {
+        searchResults.innerHTML = data; // Display the results
+    });
+});
+
+$(document).on('click', '.search-result a', function() {
+    // Your click action here
+});
+
+</script>
     <footer>
 	<div class="social-media">
         <a href="https://facebook.com" target="_blank">

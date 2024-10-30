@@ -34,7 +34,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Check if the username already exists
     $checkUser = "SELECT * FROM users WHERE username='$username'";
     $result = $conn->query($checkUser);
-
     if ($result->num_rows > 0) {
         echo "<script>alert('Username or Email already taken!'); window.location.href='register.php';</script>";
     } else if ($password !== md5($confirm_password)) {
@@ -42,9 +41,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "<script>alert('Passwords do not match!'); window.location.href='register.php';</script>";
     } else {
         // Insert the user into the database
-        $sql = "INSERT INTO users (firstname, lastname, username, address, gender, birthdate, phone_number, password, account_status) 
-                VALUES ('$firstname', '$lastname', '$username', '$address', '$gender', '$birthdate', '$phone_number', '$password', 'Pending')";
-
+        $sql = "INSERT INTO users (firstname, lastname, username, address, gender, birthdate, phone_number, password, account_status, role)
+                VALUES ('$firstname', '$lastname', '$username', '$address', '$gender', '$birthdate', '$phone_number', '$password', 'Pending', 'member')";
+        
         // Execute the SQL statement and check for errors
         if ($conn->query($sql) === TRUE) {
             $user_id = $conn->insert_id; // Get the ID of the newly registered user
@@ -54,11 +53,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Insert into email_verifications table
             $insert_verification = "INSERT INTO email_verifications (user_id, token, expires_at) VALUES (?, ?, ?)";
             $stmt = $conn->prepare($insert_verification);
-
             if ($stmt === false) {
                 die("Failed to prepare statement: " . htmlspecialchars($conn->error));
             }
-
             $stmt->bind_param("iss", $user_id, $verification_token, $expires);
             $stmt->execute();
             $stmt->close();
@@ -68,9 +65,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // Include PHPMailer classes
             require 'src/PHPMailerAutoload.php'; // Ensure this path is correct
-
             $mail = new PHPMailer(); // Create a new PHPMailer instance
-
+            
             // Set up PHPMailer
             $mail->isSMTP();
             $mail->Host       = 'smtp.gmail.com';
@@ -82,20 +78,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // Set email format to HTML
             $mail->isHTML(true);
-
+            
             // Set up PHPMailer to send the email
             $mail->setFrom('upliftpagebookstore@gmail.com', 'Uplift Page Bookstore Admin');
             $mail->addAddress($email); // Use the correct email variable
             $mail->Subject = 'Email Verification';
             $mail->Body = "Please verify your email by clicking the following link: <a href='$verification_link'>Verify Email</a>";
-
+            
             if (!$mail->send()) {
-                echo 'Email could not be sent.';
+                echo 'Email could not be sent. Mailer Error: ' . $mail->ErrorInfo;
                 // Handle error accordingly
             } else {
                 echo "<script>alert('Registration successful! Please check your email to verify your account.'); window.location.href='homepage.php';</script>";  // Redirect after success
             }
-
         } else {
             // Handle SQL error
             echo "Error: " . $sql . "<br>" . $conn->error;
@@ -104,4 +99,3 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 $conn->close();
-?>

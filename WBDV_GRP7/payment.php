@@ -1,6 +1,5 @@
 <?php
 session_start();
-
 $host = "localhost";
 $username = "root";
 $password = "";
@@ -14,36 +13,37 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// Initialize session variables if set
 $firstname = isset($_SESSION['firstname']) ? $_SESSION['firstname'] : '';
 $lastname = isset($_SESSION['lastname']) ? $_SESSION['lastname'] : '';
 $address = isset($_SESSION['address']) ? $_SESSION['address'] : '';
 $phone_number = isset($_SESSION['phone_number']) ? $_SESSION['phone_number'] : '';
-$gender = isset($_SESSION['gender']) ? $_SESSION['gender'] : '';
+$email = isset($_SESSION['email']) ? $_SESSION['email'] : '';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+// Handle login submission
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['username']) && isset($_POST['password'])) {
     $username = $_POST['username'];
     $password = $_POST['password'];
     $_SESSION['firstname'] = $_POST['firstname'];
     $_SESSION['lastname'] = $_POST['lastname'];
-    $_SESSION['gender'] = $_POST['gender'];
     $_SESSION['address'] = $_POST['address'];
     $_SESSION['phone_number'] = $_POST['phone_number'];
-	
+    $email = $username;
+    
     // Retrieve user from the database
-    $sql = "SELECT id, firstname, lastname, email, gender, phone_number,address, password FROM users WHERE username = '$username'";
+    $sql = "SELECT id, firstname, lastname, email, phone_number, address, password FROM users WHERE username = '$username'";
     $result = $conn->query($sql);
-
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
-
         // Verify password (assuming md5 is used)
         if (md5($password) === $row['password']) {
             $_SESSION['firstname'] = $row['firstname'];
             $_SESSION['lastname'] = $row['lastname'];
             $_SESSION['user_id'] = $row['id'];
-            $_SESSION['gender'] = $row['gender'];
             $_SESSION['phone_number'] = $row['phone_number'];
-			$_SESSION['address'] = $row['address'];
+            $_SESSION['address'] = $row['address'];
+            $_SESSION['email'] = $row['email'];
+            
             header("Location: homepage.php");
             exit;
         } else {
@@ -54,41 +54,113 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-if (isset($_SESSION['firstname'])) {
-    $firstname = $_SESSION['firstname'];
-    $lastname = isset($_SESSION['lastname']) ? $_SESSION['lastname'] : '';
-    $email = isset($_SESSION['gender']) ? $_SESSION['gender'] : '';
-    $phone_number = isset($_SESSION['phone_number']) ? $_SESSION['phone_number'] : '';
-    $address = isset($_SESSION['address']) ? $_SESSION['address'] : ''; // Add this line
-} else {
+// Handle logout
+if (isset($_GET['logout'])) {
+    session_destroy(); // Destroy the session to log the user out
+    header("Location: homepage.php"); // Redirect to homepage
+    exit();
+}
+
+// Add to cart if requested
+if (isset($_POST['add_to_cart'])) {
+    if (isset($_SESSION['firstname'])) {
+        $book_id = $_POST['book_id']; // Add this line to get the book ID
+        // Fetch the book details using the book ID
+        $stmt_book = $conn->prepare("SELECT book_title, book_author, price FROM books WHERE id = ?");
+        $stmt_book->bind_param("i", $book_id);
+        $stmt_book->execute();
+        $stmt_book->bind_result($book_title, $book_author, $book_price);
+        $stmt_book->fetch();
+        $stmt_book->close();
+
+        $book = array(
+            'id' => $book_id, // Include the book ID in the cart array
+            'title' => $book_title,
+            'author' => $book_author,
+            'price' => floatval(str_replace(',', '', $book_price)),
+            'quantity' => 1
+        );
+
+        if (!isset($_SESSION['cart'])) {
+            $_SESSION['cart'] = array();
+        }
+
+        // Check if the book is already in the cart
+        $found = false;
+        foreach ($_SESSION['cart'] as &$cart_item) {
+            if ($cart_item['id'] == $book_id) {
+                $cart_item['quantity'] += 1; // Increment quantity
+                $found = true;
+                break;
+            }
+        }
+
+        // If not found, add as a new item with quantity 1
+        if (!$found) {
+            $_SESSION['cart'][] = $book;
+        }
+    } else {
+        header("Location: login.php");
+        exit();
+    }
+    header("Location: homepage.php");
+    exit();
+}
+
+// Clear cart if requested
+if (isset($_POST['clear_cart'])) {
+    if (isset($_SESSION['firstname'])) {
+        if (isset($_SESSION['cart'])) {
+            unset($_SESSION['cart']);
+        }
+    } else {
+        header("Location: login.php");
+        exit();
+    }
+    header("Location: payment.php");
+    exit();
+}
+
+if (isset($_POST['decrease_quantity']) || isset($_POST['increase_quantity'])) {
+    $book_id = $_POST['book_id'];
+
+    foreach ($_SESSION['cart'] as &$cart_item) {
+        if ($cart_item['id'] == $book_id) {
+            if (isset($_POST['decrease_quantity'])) {
+                $cart_item['quantity'] -= 1; 
+            } elseif (isset($_POST['increase_quantity'])) {
+                $cart_item['quantity'] += 1; 
+            }
+
+            if ($cart_item['quantity'] <= 0) {
+                $cart_item['quantity'] = 0; // Set to zero but do not unset here
+            }
+            break; // Break after modifying the item
+        }
+    }
+
+    // Clean up the cart
+    $new_cart = array();
+    foreach ($_SESSION['cart'] as $item) {
+        if ($item['quantity'] > 0) {
+            $new_cart[] = $item; // Only keep items with quantity > 0
+        }
+    }
+    $_SESSION['cart'] = $new_cart; // Assign the cleaned array back to session
+}
+
+
+
+
+// Redirect to login if user is not logged in and accessing other sections
+if (!isset($_SESSION['firstname'])) {
     header("Location: login.php");
     exit();
 }
-
-if (isset($_GET['logout'])) {
-    session_destroy();
-    header("Location: homepage.php");
-    exit();
-}
-
-if (isset($_POST['add_to_cart'])) {
-    $book = array(
-        'title' => $_POST['book_title'],
-        'author' => $_POST['book_author'],
-        'price' => floatval(str_replace(',', '', $_POST['book_price']))
-    );
-
-    if (!isset($_SESSION['cart'])) {
-        $_SESSION['cart'] = array();
-    }
-
-    $_SESSION['cart'][] = $book;
-
-    header("Location: homepage.php");
-    exit();
-}
-
 ?>
+
+
+
 
 
 <!DOCTYPE html>
@@ -404,11 +476,13 @@ if (isset($_POST['add_to_cart'])) {
 		 .total-container h3 {
            text-align:right;
         }
+		
+		
     </style>
 </head>
 <body>
 <header>
-     <div class="headerlogo">
+    <div class="headerlogo">
         <img src="460509624_1463840257655227_6223856608048021337_n.png" alt="Logo" height="108px">
     </div>
     <h3>UPLIFT PAGE BOOKSTORE</h3>
@@ -420,102 +494,121 @@ if (isset($_POST['add_to_cart'])) {
             </button>
         </form>
     </div>
-<div class="main-content">
-            <?php if (isset($_SESSION['firstname'])): ?>
-                <span class="username-message">Hello, <?php echo htmlspecialchars($_SESSION['firstname']); ?>!</span>
-                <a href="homepage.php?logout=true"><button class="logout-button">Logout</button></a>
-            <?php else: ?>
-                <span class="username-message">Hello, Guest!</span>
-				 <a href="login.php"><button class="logout-button">Login</button></a> <!-- Add this line for Login button -->
-            <?php endif; ?>
-        </div>
+    <div class="main-content">
+        <?php if (isset($_SESSION['firstname'])): ?>
+            <span class="username-message">Hello, <?php echo htmlspecialchars($_SESSION['firstname']); ?>!</span>
+            <a href="homepage.php?logout=true"><button class="logout-button">Logout</button></a>
+        <?php else: ?>
+            <span class="username-message">Hello, Guest!</span>
+            <a href="login.php"><button class="logout-button">Login</button></a>
+        <?php endif; ?>
+    </div>
     <div class="header-buttons">
         <a href="profile.php"><img src="https://raw.githubusercontent.com/SkyPrapai/oopr/main/login-removebg-preview.png" alt="Login" height="58px"></a>
-        <a href="cart.html"><img src="https://raw.githubusercontent.com/SkyPrapai/oopr/main/cart-removebg-preview.png" alt="Cart" height="51px"></a>
+        
+        <img src="https://raw.githubusercontent.com/SkyPrapai/oopr/main/cart-removebg-preview.png" alt="Cart" height="51px">
+        <span class="cart-count">
+            <?php 
+            $cart_count = 0;
+            if (isset($_SESSION['cart'])) {
+                foreach ($_SESSION['cart'] as $cart_item) {
+                    $cart_count += $cart_item['quantity'];
+                }
+            }
+            echo $cart_count; 
+            ?>
+        </span>
+    
     </div>
 </header>
 <div class="categories-container">
-        <a href="homepage.php" class="category-link">Home</a>
-        <a href="new.php" class="category-link">New Arrivals</a>
-        <a href="sale.php" class="category-link">Sale!</a>
-        <a href="best.php" class="category-link">Best Seller</a>
-        <a href="faq.php" class="category-link">FAQs</a>
-    </div>
-	<div class="content">
-<div class="cart-container">
+    <a href="homepage.php" class="category-link">Home</a>
+    <a href="new.php" class="category-link">New Arrivals</a>
+    <a href="sale.php" class="category-link">Sale!</a>
+    <a href="best.php" class="category-link">Best Seller</a>
+    <a href="faq.php" class="category-link">FAQs</a>
+</div>
+<div class="content">
+    <div class="cart-container">
     <h1>Your Cart</h1>
+    <?php if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])): ?>
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
     <?php 
-    if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])): ?>
-        <form method="post" action="payment.php">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Author</th>
-                        <th>Price</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($_SESSION['cart'] as $book): ?>
-                         <tr>
-            <td><?php echo stripslashes(htmlspecialchars_decode($book['title'], ENT_QUOTES)); ?></td>
-			<td><?php echo stripslashes(htmlspecialchars_decode($book['author'], ENT_QUOTES)); ?></td>
-		<td>₱<?php echo htmlspecialchars($book['price']); ?></td>
-	
+    $total_price = 0;
+    foreach ($_SESSION['cart'] as $book): 
+        $subtotal = $book['price'] * $book['quantity'];
+        $total_price += $subtotal;
+    ?>
+        <tr>
+            <td><?php echo htmlspecialchars($book['title']); ?></td>
+            <td><?php echo htmlspecialchars($book['author']); ?></td>
+            <td>
+                <form method="post" action="payment.php" style="display: inline;">
+                    <input type="hidden" name="book_id" value="<?php echo $book['id']; ?>">
+                    <button type="submit" name="decrease_quantity" class="quantity-btn">-</button>
+                    <?php echo htmlspecialchars($book['quantity']); ?>
+                    <button type="submit" name="increase_quantity" class="quantity-btn">+</button>
+                </form>
+            </td>
+            <td>₱<?php echo htmlspecialchars(number_format($book['price'], 2)); ?></td>
+            <td>₱<?php echo htmlspecialchars(number_format($subtotal, 2)); ?></td>
         </tr>
-                  
-					 <?php 
-     
-            $total_price += $book['price']; 
-            ?>
-        <?php endforeach; ?>
-                </tbody>
-            </table>
-			 <div class="total-container">
-        <h3>Total Price: ₱<?php echo htmlspecialchars($total_price); ?></h3>
-    </div>
+    <?php endforeach; ?>
+</tbody>
 
-            <div class="buttons">
-                <!-- Clear Cart Button -->
+        </table>
+        <div class="total-container">
+            <h3>Total Price: ₱<?php echo htmlspecialchars(number_format($total_price, 2)); ?></h3>
+        </div>
+        <div class="buttons">
+            <form method="post" action="payment.php">
                 <button type="submit" name="clear_cart" class="clear-cart-btn">Clear Cart</button>
-            </div>
-        </form>
+            </form>
+        </div>
     <?php else: ?>
         <p>Your cart is empty.</p>
     <?php endif; ?>
 </div>
 
-<div class="checkout-form">
+
+
+    <div class="checkout-form">
         <h2>Enter Shipping Details</h2>
         <form action="process_payment.php" method="POST">
-         <label for="name">First Name:</label>
-<input type="text" id="firstname" name="firstname" value="<?php echo htmlspecialchars($firstname); ?>" required readonly>
-
-<label for="lastname">Last Name:</label>
-<input type="text" id="lastname" name="lastname" value="<?php echo htmlspecialchars(!empty($_SESSION['lastname']) ? $_SESSION['lastname'] : ''); ?>" required readonly>
-
-<label for="lastname">Email:</label>
-<input type="text" id="email" name="email" value="" placeholder="Email" required>
-
-<label for="address">Address:</label>
-<input type="text" id="address" name="address" value="<?php echo htmlspecialchars($address); ?>" required readonly>
-
-<label for="phone_number">Contact Number:</label>
-<input type="text" id="phone_number" name="phone_number" value="<?php echo ($phone_number); ?>" required readonly>
-			<laber for=payment_method">Payment Method:</label>
+            <label for="name">First Name:</label>
+            <input type="text" id="firstname" name="firstname" value="<?php echo htmlspecialchars($firstname); ?>" required readonly>
+            <label for="lastname">Last Name:</label>
+            <input type="text" id="lastname" name="lastname" value="<?php echo htmlspecialchars($lastname); ?>" required readonly>
+            <label for="email">Email:</label>
+            <input type="text" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required readonly>
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address" value="<?php echo htmlspecialchars($address); ?>" required readonly>
+            <label for="phone_number">Contact Number:</label>
+            <input type="text" id="phone_number" name="phone_number" value="<?php echo htmlspecialchars($phone_number); ?>" required readonly>
+            <label for="payment_method">Payment Method:</label>
             <select name="payment_method" required>
-                <option value="" disabled selected>Select Payment Method</option>  
+                <option value="" disabled selected>Select Payment Method</option>
                 <option value="PayPal">PayPal</option>
-				<option value="Gcash">Gcash</option>
-				<option value="Cash on Delivery">Cash on Delivery</option>
+                <option value="Gcash">Gcash</option>
+                <option value="Cash on Delivery">Cash on Delivery</option>
             </select>
-			 <input  type="hidden" name="total_price" value="<?php echo number_format($total_price, 2); ?>">
+            <input type="hidden" name="total_price" value="<?php echo number_format($total_price, 2); ?>">
             <button type="submit">Proceed to Payment</button>
         </form>
     </div>
 </div>
-    <footer>
-	<div class="social-media">
+<footer>
+    <div class="social-media">
         <a href="https://facebook.com" target="_blank">
             <img src="https://raw.githubusercontent.com/SkyPrapai/oopr/main/fb-removebg-preview.png" alt="Facebook">
         </a>
@@ -526,7 +619,7 @@ if (isset($_POST['add_to_cart'])) {
             <img src="https://raw.githubusercontent.com/SkyPrapai/oopr/main/images-removebg-preview.png" alt="Instagram">
         </a>
     </div>
-        <p>&copy; 2024 Online Bookstore. All rights reserved.</p>
-    </footer>
+    <p>&copy; 2024 Online Bookstore. All rights reserved.</p>
+</footer>
 </body>
 </html>
